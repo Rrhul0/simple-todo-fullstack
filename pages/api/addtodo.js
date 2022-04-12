@@ -1,15 +1,13 @@
-import {PrismaClient} from '@prisma/client'
+import prisma from '../../lib/dbclient'
 export default async function handler(req,res){
     const todo = req.body
     const idCookie = req.headers.cookie?req.headers.cookie:null
     const hash = idCookie.split('=')[1]
-    const prisma = new PrismaClient()
     const user = await prisma.user.findUnique({
         where:{
             hash:hash
         }
     })
-    console.log(user)
     if(user){
         const newTodo = await prisma.todo.create({
             data:{
@@ -19,5 +17,4 @@ export default async function handler(req,res){
         })
         res.status(200).json({...newTodo,timeCreated:newTodo.timeCreated.toString()})
     }
-    await prisma.$disconnect();
 }

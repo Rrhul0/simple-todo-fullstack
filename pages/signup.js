@@ -1,26 +1,10 @@
 import bodyParser from 'body-parser'
 import util from 'util'
-import { PrismaClient } from '@prisma/client'
 import sum from 'hash-sum'
+import prisma from '../lib/dbclient'
 
 export default function Signup(){
-    function onSubmitForm(e){
-        e.preventDefault()
-        const data = {
-            username:e.target.username.value,
-            email:e.target.email.value,
-            password:e.target.password.value,
-        }
-        console.log(data)
-        if(!data.username||!data.email||!data.password) return
-        fetch('signup',{
-            method:'POST',
-            body:JSON.stringify(data),
-            credentials:'same-origin'
-        }).then(res=>{
-            if(res.status===200) console.log('seccesfully sign up')
-        })
-    }
+
     return(
         <form action="signup" method="POST">
             <label htmlFor="username">Username(unique):</label>
@@ -49,9 +33,9 @@ export async function getServerSideProps({req,res}){
     const getBody = util.promisify(bodyParser.urlencoded())
     await getBody(req,res)
     const signupData = req.body
+    if(!signupData.username||!signupData.email||!signupData.password) return{props:{}}
     const hash = sum(signupData.username+signupData.password)
     
-    const prisma = new PrismaClient()
     const newUser = await prisma.user.create({
         data:{
             username:signupData.username,
@@ -59,7 +43,6 @@ export async function getServerSideProps({req,res}){
             hash:hash
         }
     })
-    await prisma.$disconnect()
     res.setHeader('set-Cookie',`id=${newUser.hash}; path=/`)
     return {
         redirect:{
