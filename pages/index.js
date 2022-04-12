@@ -61,11 +61,11 @@ export async function getServerSideProps({req}){
             isLoggedIn:isLoggedIn
         }
     }
-    const id = +req.headers.cookie.split('=')[1]
+    const hash = req.headers.cookie.split('=')[1]
     const prisma = new PrismaClient()
     const user = await prisma.user.findUnique({
         where:{
-            id:id
+            hash:hash
         },
         include:{
             todos:true
@@ -74,7 +74,7 @@ export async function getServerSideProps({req}){
     return {
         props:{
             isLoggedIn:isLoggedIn,
-            id:id,
+            id:user.id,
             username:user.username,
             todos:user.todos.map(todo=>{
                 return {...todo,timeCreated:todo.timeCreated.toString()}

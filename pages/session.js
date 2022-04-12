@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser'
 import util from 'util'
 import { PrismaClient } from '@prisma/client'
+import sum from 'hash-sum'
 // import { parseBody } from 'next/dist/server/api-utils'
 
 export default function Session(){
@@ -19,9 +20,12 @@ export async function getServerSideProps({req,res}){
         }
     })
     await prisma.$disconnect()
+    console.log(sum(loginData.username + loginData.password))
+    console.log(user.hash)
     if(user){
-        if(user.password=== loginData.password){
-            res.setHeader('Set-cookie',`id=${user.id}; path=/`)
+        if(user.hash=== sum(loginData.username + loginData.password)){
+            res.setHeader('Set-cookie',`id=${user.hash}; path=/`)
+            console.log(sum(loginData.email + loginData.password))
             return {
                 redirect:{
                     destination:'/',

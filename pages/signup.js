@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser'
 import util from 'util'
 import { PrismaClient } from '@prisma/client'
+import sum from 'hash-sum'
 
 export default function Signup(){
     function onSubmitForm(e){
@@ -48,13 +49,18 @@ export async function getServerSideProps({req,res}){
     const getBody = util.promisify(bodyParser.urlencoded())
     await getBody(req,res)
     const signupData = req.body
+    const hash = sum(signupData.username+signupData.password)
     
     const prisma = new PrismaClient()
     const newUser = await prisma.user.create({
-        data:signupData
+        data:{
+            username:signupData.username,
+            email:signupData.email,
+            hash:hash
+        }
     })
     await prisma.$disconnect()
-    res.setHeader('set-Cookie',`id=${newUser.id}; path=/`)
+    res.setHeader('set-Cookie',`id=${newUser.hash}; path=/`)
     return {
         redirect:{
             destination:'/',
