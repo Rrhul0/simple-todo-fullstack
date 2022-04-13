@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import Login from '../components/login'
 import prisma from '../lib/dbclient'
+import tokenFromCookie from '../lib/tokenFromCookie'
 
 export default function Home(props){
     const [todos,setTodos] = useState(props.todos)
@@ -19,8 +20,8 @@ export default function Home(props){
         }).then(res=>res.json())
         .then(json=>{
             setTodos([...todos,json])
+            e.target.todo.value = ''
         })
-        // setTodos()
     }
     if(!isLoggedIn) return(
         <div>
@@ -34,11 +35,12 @@ export default function Home(props){
             <div>id: {props.id}</div>
             <div>username: {props.username}</div>
             <div>Total Todos: {todos.length}</div>
+            <div>Login devices: <Link href='/devices'><a>{props.loginCount} devices</a></Link></div>
             <section id='todos'>
                 <div id='error-addtodo' style={{display: 'none'}}>Please write a todo!</div>
                 <form onSubmit={onSubmitTodo}>
-                    <label htmlFor='addtodo'>Write Your Todo Here:</label>
-                    <input id='addtodo' name='todo'></input>
+                    <label htmlFor='todo'>Write Your Todo Here:</label>
+                    <input id='todo' name='todo'></input>
                     <button type='submit'>submit</button>
                 </form>
                 <div id='list-todos'>
@@ -58,40 +60,45 @@ export default function Home(props){
 }
 
 export async function getServerSideProps({req,res}){
-    // console.log(req.headers.cookie)
-    const isLoggedIn = req.headers.cookie?true:false
-    if(!isLoggedIn) return{
-        props:{
-            isLoggedIn:isLoggedIn
-        }
-    }
-    const hash = req.headers.cookie.split('=')[1]
-    const user = await prisma.user.findUnique({
-        where:{
-            hash:hash
-        },
-        include:{
-            todos:true
-        }
-    })
-    if(user){
-        return {
-            props:{
-                isLoggedIn:isLoggedIn,
-                id:user.id,
-                username:user.username,
-                todos:user.todos.map(todo=>{
-                    return {...todo,timeCreated:todo.timeCreated.toString()}
-                })
-            }
-        }
-    }
-    else{
-        res.setHeader('Set-cookie','id=null; path=/; max-age=0')
+
+    const token = tokenFromCookie(req.headers.cookie)
+    if(!token){
         return{
             props:{
                 isLoggedIn:false
             }
+        }
+    }
+    const cookie = await prisma.cookies.findUnique({
+        where:{
+            cookie:token
+        },
+        include:{
+            User:{
+                include:{
+                    todos:true,
+                    Cookies:true
+                }
+            }
+        }
+    })
+    if(cookie){
+        return{
+            props:{
+                isLoggedIn:true,
+                id:cookie.userId,
+                username:cookie.User.username,
+                todos:cookie.User.todos.map(todo=>{
+                    return {...todo,timeCreated:todo.timeCreated.toString()}
+                }),
+                loginCount:cookie.User.Cookies.length
+            }
+        }
+    }
+    res.setHeader('Set-cookie','token=null; path=/; max-age=0')
+    return{
+        props:{
+            isLoggedIn:false
         }
     }
 }

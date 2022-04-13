@@ -1,18 +1,18 @@
 import prisma from '../../lib/dbclient'
+import tokenFromCookie from '../../lib/tokenFromCookie'
 export default async function handler(req,res){
     const todo = req.body
-    const idCookie = req.headers.cookie?req.headers.cookie:null
-    const hash = idCookie.split('=')[1]
-    const user = await prisma.user.findUnique({
+    const token = tokenFromCookie(req.headers.cookie)
+    const matchedCookie = await prisma.cookies.findUnique({
         where:{
-            hash:hash
+            cookie:token
         }
     })
-    if(user){
+    if(matchedCookie){
         const newTodo = await prisma.todo.create({
             data:{
                 text:todo,
-                userId:user.id
+                userId:matchedCookie.userId
             }
         })
         res.status(200).json({...newTodo,timeCreated:newTodo.timeCreated.toString()})
