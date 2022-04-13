@@ -1,14 +1,15 @@
+import Link from "next/link";
 import prisma from "../lib/dbclient";
 import tokenFromCookie from "../lib/tokenFromCookie";
 
 export default function Devices(props){
-    if(!props.devices) return <div>Make sure you Logged In</div>
+    if(!props.devices) return <div>Make sure you Logged In, <Link href='/'><a>Login</a></Link></div>
     return(
         <>
             {props.devices.map(device=>{
                 return (
                 <div key={device.timeLogin}>
-                    <div>Device: {device.device}</div>
+                    <div>Device: {device.device} <Link href={'/logout/'+device.cookie}><a>Logout</a></Link></div>
                     <div>Logged In at {device.timeLogin}</div>
                 </div>
                 )
@@ -39,7 +40,8 @@ export async function getServerSideProps({req}){
         const allDevices = allCookies.map(cookie=>{
             if(cookie.device) return {
                 device:cookie.device,
-                timeLogin:cookie.timeCreated.toString()
+                timeLogin:cookie.timeCreated.toString(),
+                cookie:cookie.cookie
             }
         })
         return{
@@ -47,5 +49,8 @@ export async function getServerSideProps({req}){
                 devices:allDevices
             }
         }
+    }
+    else return{
+        props:{}
     }
 }

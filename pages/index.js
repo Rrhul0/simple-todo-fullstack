@@ -6,7 +6,7 @@ import tokenFromCookie from '../lib/tokenFromCookie'
 
 export default function Home(props){
     const [todos,setTodos] = useState(props.todos)
-    const [isLoggedIn,setLoggedin] = useState(props.isLoggedIn)
+    // const [isLoggedIn,setLoggedin] = useState(props.isLoggedIn)
     function onSubmitTodo(e){
         e.preventDefault()
         document.querySelector('#error-addtodo').style.display = 'none'
@@ -23,7 +23,7 @@ export default function Home(props){
             e.target.todo.value = ''
         })
     }
-    if(!isLoggedIn) return(
+    if(!props.isLoggedIn) return(
         <div>
             <Login/>
             <Link href='/signup'><a>Signup</a></Link>
