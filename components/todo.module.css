@@ -1,0 +1,9 @@
+.todo{
+    border: 2px red solid;
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+}
+.todo_text{
+    margin: 10px;
+}

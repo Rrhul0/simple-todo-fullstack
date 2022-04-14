@@ -6,6 +6,7 @@ export default function Devices(props){
     if(!props.devices) return <div>Make sure you Logged In, <Link href='/'><a>Login</a></Link></div>
     return(
         <>
+            <div>Return to <Link href='/'><a>Home</a></Link></div>
             {props.devices.map(device=>{
                 return (
                 <div key={device.timeLogin}>

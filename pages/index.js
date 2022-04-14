@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import Login from '../components/login'
+import Todo from '../components/todo'
 import prisma from '../lib/dbclient'
 import tokenFromCookie from '../lib/tokenFromCookie'
+import {formatDistanceToNow} from 'date-fns'
 
 export default function Home(props){
     const [todos,setTodos] = useState(props.todos)
-    // const [isLoggedIn,setLoggedin] = useState(props.isLoggedIn)
+
+
     function onSubmitTodo(e){
         e.preventDefault()
         document.querySelector('#error-addtodo').style.display = 'none'
@@ -23,6 +26,20 @@ export default function Home(props){
             e.target.todo.value = ''
         })
     }
+
+    function onClickAllRemove(){
+        fetch('/api/deletefinished',{
+            method:'POST'
+        })
+        .then(res=>{
+            console.log(res.statusText)
+            if(res.statusText==='OK'){
+                const todoShow = todos.filter(todo=>!todo.finished)
+                setTodos(todoShow)
+            }
+        })
+    }
+    
     if(!props.isLoggedIn) return(
         <div>
             <Login/>
@@ -41,16 +58,13 @@ export default function Home(props){
                 <form onSubmit={onSubmitTodo}>
                     <label htmlFor='todo'>Write Your Todo Here:</label>
                     <input id='todo' name='todo'></input>
-                    <button type='submit'>submit</button>
+                    <button type='submit'>Add</button>
                 </form>
+                <button onClick={onClickAllRemove}>Remove All Finished</button>
                 <div id='list-todos'>
-                    {todos.map(todo=>{
+                    {todos.slice().reverse().map(todo=>{
                         return(
-                            <div key={todo.id}>
-                                <div>{todo.text}</div>
-                                <div>created at: {todo.timeCreated}</div>
-                                <div>finished:{todo.finished.toString()}</div>
-                            </div>
+                            <Todo key={todo.id} todo={todo}/>
                         )}
                     )}
                 </div>
@@ -89,7 +103,11 @@ export async function getServerSideProps({req,res}){
                 id:cookie.userId,
                 username:cookie.User.username,
                 todos:cookie.User.todos.map(todo=>{
-                    return {...todo,timeCreated:todo.timeCreated.toString()}
+                    return {
+                        ...todo,
+                        timeCreated:'',
+                        timeElapsed:formatDistanceToNow(todo.timeCreated)
+                    }
                 }),
                 loginCount:cookie.User.Cookies.length
             }
