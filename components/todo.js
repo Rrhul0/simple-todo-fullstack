@@ -40,7 +40,7 @@ export default function Todo(props){
                 textDecoration: todo.finished?'line-through':'none'
             }}> {todo.text}</h3>
             <div className={styles.btns}>
-                <button className={styles.finished} onClick={onClickFinished}>finished?</button>
+                <button className={styles.finished} onClick={onClickFinished}>{!todo.finished?'finished?':'unfinished?'}</button>
                 <button className={styles.delete} onClick={onClickDelete}>Delete</button>
             </div>
             <div>Created {todo.timeElapsed} ago</div>
