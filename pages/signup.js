@@ -60,7 +60,6 @@ export async function getServerSideProps({req,res}){
             hash:hash
         }
     })
-    // console.log(req.headers)
     const newCookie = await prisma.cookies.create({
         data:{
             cookie:crypto.randomBytes(20).toString('hex'),

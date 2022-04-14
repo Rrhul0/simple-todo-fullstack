@@ -27,18 +27,6 @@ export default function Home(props){
         })
     }
 
-    function onClickAllRemove(){
-        fetch('/api/deletefinished',{
-            method:'POST'
-        })
-        .then(res=>{
-            console.log(res.statusText)
-            if(res.statusText==='OK'){
-                const todoShow = todos.filter(todo=>!todo.finished)
-                setTodos(todoShow)
-            }
-        })
-    }
     
     if(!props.isLoggedIn) return(
         <div>
@@ -62,7 +50,7 @@ export default function Home(props){
                 </form>
                 <button><Link href='/deletefinished'><a>Remove all finished</a></Link></button>
                 <div id='list-todos'>
-                    {todos.slice().reverse().map(todo=>{
+                    {todos.slice().sort((a,b)=>b.id-a.id).map(todo=>{
                         return(
                             <Todo key={todo.id} todo={todo}/>
                         )}

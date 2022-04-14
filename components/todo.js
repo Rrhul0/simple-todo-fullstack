@@ -17,13 +17,21 @@ export default function Todo(props){
         })
     }
     function onClickFinished(e){
+        
         fetch('/api/finishtodo',{
             method:'POST',
             body:new URLSearchParams({
-                id:todo.id
+                id:todo.id,
+                isFinish:!todo.finished?'yes':'no'
             })
         })
-        .then(res=>setTodo({...todo,finished:true}))
+        .then(res=>{
+            if(res.statusText==='OK') {
+                setTodo({...todo,finished:!todo.finished})
+                e.target.textContent = todo.finished?'finished?':'unfinished?'
+            }
+        })
+        
     }
     if(!todo) return
     return(
@@ -35,7 +43,7 @@ export default function Todo(props){
                 <button className={styles.finished} onClick={onClickFinished}>finished?</button>
                 <button className={styles.delete} onClick={onClickDelete}>Delete</button>
             </div>
-            <div>Created {todo.timeElapsed}</div>
+            <div>Created {todo.timeElapsed} ago</div>
         </div>
     )
 }
