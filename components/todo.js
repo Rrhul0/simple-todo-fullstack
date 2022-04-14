@@ -23,11 +23,7 @@ export default function Todo(props){
                 id:todo.id
             })
         })
-        .then(res=>{
-            if(res.statusText==='OK'){
-                setTodo({...todo,finished:true})
-            }}
-        )
+        .then(res=>setTodo({...todo,finished:true}))
     }
     if(!todo) return
     return(
