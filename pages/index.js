@@ -60,7 +60,7 @@ export default function Home(props){
                     <input id='todo' name='todo'></input>
                     <button type='submit'>Add</button>
                 </form>
-                <button onClick={onClickAllRemove}>Remove All Finished</button>
+                <button><Link href='/deletefinished'><a>Remove all finished</a></Link></button>
                 <div id='list-todos'>
                     {todos.slice().reverse().map(todo=>{
                         return(

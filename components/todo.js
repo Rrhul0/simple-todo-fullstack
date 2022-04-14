@@ -1,6 +1,8 @@
-import { prisma } from '@prisma/client'
+// import finish from '../public/finish.webp'
+import { useState } from 'react'
 import styles from './todo.module.css'
-export default function Todo({todo}){
+export default function Todo(props){
+    const [todo,setTodo] = useState(props.todo)
     function onClickDelete(e){
         fetch('/api/deletetodo',{
             method:'POST',
@@ -10,7 +12,7 @@ export default function Todo({todo}){
         })
         .then(res=>{
             if(res.status===200) {
-                e.target.parentNode.parentNode.remove()
+                setTodo(null)
             }
         })
     }
@@ -23,10 +25,11 @@ export default function Todo({todo}){
         })
         .then(res=>{
             if(res.statusText==='OK'){
-                e.target.parentNode.parentNode.firstElementChild.style.textDecoration = 'line-through'
+                setTodo({...todo,finished:true})
             }}
         )
     }
+    if(!todo) return
     return(
         <div className={styles.todo}>
             <h3 className={styles.todo_text} style={{
