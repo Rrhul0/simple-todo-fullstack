@@ -17,6 +17,8 @@ export default function Todo(props){
         })
     }
     function onClickFinished(e){
+        setTodo({...todo,finished:!todo.finished})
+        e.target.textContent = todo.finished?'finished?':'unfinished?'
         
         fetch('/api/finishtodo',{
             method:'POST',
@@ -27,8 +29,7 @@ export default function Todo(props){
         })
         .then(res=>{
             if(res.statusText==='OK') {
-                setTodo({...todo,finished:!todo.finished})
-                e.target.textContent = todo.finished?'finished?':'unfinished?'
+                console.log('done')
             }
         })
         
