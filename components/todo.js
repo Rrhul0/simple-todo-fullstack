@@ -23,7 +23,7 @@ export default function Todo({todo}){
         })
         .then(res=>{
             if(res.statusText==='OK'){
-                e.target.parentNode.parentNode.firstElementChild.style['text-decoration'] = 'line-through'
+                e.target.parentNode.parentNode.firstElementChild.style.textDecoration = 'line-through'
             }}
         )
     }
