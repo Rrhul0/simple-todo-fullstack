@@ -20,4 +20,5 @@ export default async function handler(req,res){
         })
         res.status(200).send('success')
     }
+    else res.status(401).send('unauthorized')
 }

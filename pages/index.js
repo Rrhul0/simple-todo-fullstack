@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { useState } from 'react'
+import Head from 'next/head'
+import { useEffect, useState } from 'react'
 import Login from '../components/login'
 import Todo from '../components/todo'
 import prisma from '../lib/dbclient'
@@ -8,7 +9,6 @@ import {formatDistanceToNow} from 'date-fns'
 
 export default function Home(props){
     const [todos,setTodos] = useState(props.todos)
-
 
     function onSubmitTodo(e){
         e.preventDefault()
@@ -30,12 +30,14 @@ export default function Home(props){
     
     if(!props.isLoggedIn) return(
         <div>
+            <Head><title>Simple TODO App</title></Head>
             <Login/>
             <Link href='/signup'><a>Signup</a></Link>
         </div>
     )
     return(
         <div>
+            <Head><title>Simple TODO App</title></Head>
             <Link href='/logout'><a>LogOut</a></Link>
             <div>id: {props.id}</div>
             <div>username: {props.username}</div>
@@ -60,6 +62,7 @@ export default function Home(props){
         </div>
     )     
 }
+
 
 export async function getServerSideProps({req,res}){
 

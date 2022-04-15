@@ -1,9 +1,13 @@
 // import finish from '../public/finish.webp'
+import { useRouter } from 'next/router'
 import { useState } from 'react'
 import styles from './todo.module.css'
+
 export default function Todo(props){
     const [todo,setTodo] = useState(props.todo)
-    function onClickDelete(e){
+    const router = useRouter()
+    function onClickDelete(){
+        setTodo(null)
         fetch('/api/deletetodo',{
             method:'POST',
             body:new URLSearchParams({
@@ -11,8 +15,8 @@ export default function Todo(props){
             })
         })
         .then(res=>{
-            if(res.status===200) {
-                setTodo(null)
+            if(res.status===401) {
+                router.push('/unauthorized')
             }
         })
     }
@@ -28,8 +32,8 @@ export default function Todo(props){
             })
         })
         .then(res=>{
-            if(res.statusText==='OK') {
-                console.log('done')
+            if(res.status===401) {
+                router.push('/unauthorized')
             }
         })
         

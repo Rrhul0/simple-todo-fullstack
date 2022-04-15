@@ -18,4 +18,5 @@ export default async function handler(req,res){
         })
         res.status(200).json({...newTodo,timeCreated:'',timeElapsed:formatDistanceToNow(newTodo.timeCreated)})
     }
+    else res.status(401).send('unauthorized')
 }
