@@ -3,6 +3,7 @@ import tokenFromCookie from '../../lib/tokenFromCookie'
 import { formatDistanceToNow } from 'date-fns'
 export default async function handler(req,res){
     const todo = req.body
+    if(!todo) res.status(204).send('no content todo')
     const token = tokenFromCookie(req.headers.cookie)
     const matchedCookie = await prisma.cookies.findUnique({
         where:{
@@ -16,7 +17,7 @@ export default async function handler(req,res){
                 userId:matchedCookie.userId
             }
         })
-        res.status(200).json({...newTodo,timeCreated:'',timeElapsed:formatDistanceToNow(newTodo.timeCreated)})
+        res.status(201).json({...newTodo,timeCreated:'',timeElapsed:formatDistanceToNow(newTodo.timeCreated)})
     }
     else res.status(401).send('unauthorized')
 }

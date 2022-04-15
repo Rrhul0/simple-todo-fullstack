@@ -4,20 +4,60 @@ import sum from 'hash-sum'
 import prisma from '../lib/dbclient'
 import crypto from 'crypto'
 import tokenFromCookie from '../lib/tokenFromCookie'
+import { useState } from 'react'
 
 export default function Signup(){
+    const [availableUsername,setAvailableUsername] = useState('')
+    const [availableEmail,setAvailableEmail] = useState('')
 
+    function onBlurInput(e){
+        if(e.target.value==='') return
+        fetch('/api/checkavailable',{
+            method:'POST',
+            body: new URLSearchParams({
+                name:e.target.name,
+                value:e.target.value
+            })
+        })
+        .then(res=>{
+            return res.text()
+        })
+        .then(data=>{
+            if(data) {
+                if(e.target.name==='email') setAvailableEmail(data)
+                else setAvailableUsername(data)
+            }
+        })
+    }
     return(
+        <>
         <form action="signup" method="POST">
-            <label htmlFor="username">Username(unique):</label>
-            <input id="username" name='username'/>
-            <label htmlFor="email">Email:</label>
-            <input id="email" type='email' name="email"/>
+            <div style={{display:'flex',gap:'10px',margin:'10px'}}>
+                <label htmlFor="username">Username(unique):</label>
+                <input 
+                    id="username" 
+                    name='username' 
+                    onBlur={onBlurInput}
+                    onFocus={()=>setAvailableUsername('')}
+                />
+                <div id='username_check'>{availableUsername}</div>
+            </div>
+            <div style={{display:'flex',gap:'10px',margin:'10px'}}>
+                <label htmlFor="email">Email:</label>
+                <input 
+                    id="email" 
+                    type='email' 
+                    name="email"
+                    onBlur={onBlurInput}
+                    onFocus={()=>setAvailableEmail('')}
+                />
+                <div id='email_check'>{availableEmail}</div>
+            </div>
             <label htmlFor="password">Password:</label>
             <input id="password" type='password' name="password"/>
-            {/* <input type='hidden' name='useragent'/> */}
             <button type="submit">submit</button>
         </form>
+        </>
     )
 }
 
@@ -52,26 +92,36 @@ export async function getServerSideProps({req,res}){
     const signupData = req.body
     if(!signupData.username||!signupData.email||!signupData.password) return{props:{}}
     const hash = sum(signupData.username+signupData.password)
-    
-    const newUser = await prisma.user.create({
-        data:{
-            username:signupData.username,
-            email:signupData.email,
-            hash:hash
+    try{
+        const newUser = await prisma.user.create({
+            data:{
+                username:signupData.username,
+                email:signupData.email,
+                hash:hash
+            }
+        })
+        if(newUser){
+            const newCookie = await prisma.cookies.create({
+                data:{
+                    cookie:crypto.randomBytes(20).toString('hex'),
+                    userId: newUser.id,
+                    device:device
+                }
+            })
+            res.setHeader('set-Cookie',`token=${newCookie.cookie}; path=/; max-age=${7*24*60*60}`)
+            return {
+                redirect:{
+                    destination:'/',
+                    permanant:false,
+                }
+            }
         }
-    })
-    const newCookie = await prisma.cookies.create({
-        data:{
-            cookie:crypto.randomBytes(20).toString('hex'),
-            userId: newUser.id,
-            device:device
-        }
-    })
-    res.setHeader('set-Cookie',`token=${newCookie.cookie}; path=/; max-age=${7*24*60*60}`)
-    return {
-        redirect:{
-            destination:'/',
-            permanant:false,
+    }
+    catch(err){
+        return {
+            props:{
+                err:'used username or email already been used'
+            }
         }
     }
 }

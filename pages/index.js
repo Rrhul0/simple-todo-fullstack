@@ -25,6 +25,7 @@ export default function Home(props){
             setTodos([...todos,json])
             e.target.todo.value = ''
         })
+        .catch(err=>console.log('error in fetch post'))
     }
 
     
