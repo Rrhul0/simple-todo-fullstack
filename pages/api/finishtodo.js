@@ -1,5 +1,5 @@
 import prisma from '../../lib/dbclient'
-import tokenFromCookie from '../../lib/tokenFromCookie'
+import {tokenFromCookie} from '../../lib/manageCookies'
 export default async function handler(req,res){
     const todoId = req.body.id
     const isFinish = req.body.isFinish

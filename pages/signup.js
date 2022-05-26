@@ -1,127 +1,73 @@
-import bodyParser from 'body-parser'
-import util from 'util'
-import sum from 'hash-sum'
-import prisma from '../lib/dbclient'
-import crypto from 'crypto'
-import tokenFromCookie from '../lib/tokenFromCookie'
-import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { useRef,useState } from 'react'
+import { useUser } from '../lib/hooks'
+import styles from '../styles/login.module.css'
+import newStyles from '../styles/signuponly.module.css'
 
 export default function Signup(){
-    const [availableUsername,setAvailableUsername] = useState('')
-    const [availableEmail,setAvailableEmail] = useState('')
+    useUser({redirectTo:'/',redirectIfFound:true})
+    const [usernameAvail,setUsernameAvail] = useState(null)
+    const [emailAvail,setEmailAvail] = useState(null)
+    const refUsernameAvail = useRef()
+    const refEmailAvail = useRef()
+    const router = useRouter()
 
-    function onBlurInput(e){
+    async function onBlurInput(e){
         if(e.target.value==='') return
-        fetch('/api/checkavailable',{
+        const ref = e.target.name==='email'?refEmailAvail:refUsernameAvail
+        ref.current.textContent = 'Loading...'
+
+        const res = await fetch('/api/checkavailable',{
             method:'POST',
             body: new URLSearchParams({
                 name:e.target.name,
                 value:e.target.value
             })
         })
-        .then(res=>{
-            return res.text()
+        if(res.status!==200) return
+        const availablity = (await res.json()).availablity
+        e.target.name==='email' && setEmailAvail(availablity)
+        e.target.name==='username' && setUsernameAvail(availablity)
+        ref.current.style.color = availablity?'green':'red'
+        ref.current.textContent = availablity?'Available':'Not Available'
+        
+    }
+
+    async function onSubmit(e){
+        e.preventDefault()
+        if(!usernameAvail||!emailAvail) return
+        const res = await fetch('/api/signup',{
+            method:'POST',
+            body:new URLSearchParams(new FormData(e.target))
         })
-        .then(data=>{
-            if(data) {
-                if(e.target.name==='email') setAvailableEmail(data)
-                else setAvailableUsername(data)
-            }
-        })
+        if (res.status !== 200){
+            console.log('something done wrong with api')
+            //ref.current.style.display = 'block'
+        }
+        // const data = await res.json()
+        // if(data?.userCreated){
+        //     router.push('/')
+        //     return
+        // }
+        else return
     }
     return(
-        <>
-        <form action="signup" method="POST">
-            <div style={{display:'flex',gap:'10px',margin:'10px'}}>
-                <label htmlFor="username">Username(unique):</label>
-                <input 
-                    id="username" 
-                    name='username' 
-                    onBlur={onBlurInput}
-                    onFocus={()=>setAvailableUsername('')}
-                />
-                <div id='username_check'>{availableUsername}</div>
+        <div className={styles.whole}>
+            <div className={styles.container}>
+            <form onSubmit={onSubmit} className={styles.form}>
+                <p className={styles.p}>Username</p>
+                <input type='text' name="username" className={styles.input} required onBlur={onBlurInput}/>
+                <div className={newStyles.availablity} ref={refUsernameAvail}></div>
+                <p className={styles.p}>Email</p>
+                <input type='email' name="email" className={styles.input} required onBlur={onBlurInput}/>
+                <div className={newStyles.availablity} ref={refEmailAvail}></div>
+                <p className={styles.p}>Password</p>
+                <input type='password' name="password" className={styles.input} required/>
+                <button type="submit" className={styles.submit} disabled={!usernameAvail||!emailAvail}>LogIn</button>
+            </form>
+            <div>Already have an Account? <Link href='/login'><a>LogIn</a></Link></div>
             </div>
-            <div style={{display:'flex',gap:'10px',margin:'10px'}}>
-                <label htmlFor="email">Email:</label>
-                <input 
-                    id="email" 
-                    type='email' 
-                    name="email"
-                    onBlur={onBlurInput}
-                    onFocus={()=>setAvailableEmail('')}
-                />
-                <div id='email_check'>{availableEmail}</div>
-            </div>
-            <label htmlFor="password">Password:</label>
-            <input id="password" type='password' name="password"/>
-            <button type="submit">submit</button>
-        </form>
-        </>
+        </div>
     )
-}
-
-export async function getServerSideProps({req,res}){
-    if(req.method==='GET'){
-        if(tokenFromCookie(req.headers.cookie)) return{
-            redirect:{
-                destination:'/',
-                permanant:false,
-            }
-        }
-        return {
-            props:{}
-        }
-    }
-    let platform = 'Unknown'
-    let browser = 'Unknown'
-    if(req.headers['user-agent'].match(/Chrome/)) browser = 'Chrome'
-    else if(req.headers['user-agent'].match(/Safari/)) browser = 'Safari'
-    else if(req.headers['user-agent'].match(/Firefox/)) browser = 'Firefox'
-    
-    if(req.headers['user-agent'].match(/Android/)) platform = 'Android'
-    else if(req.headers['user-agent'].match(/Mac OS X/)) platform = 'MacOS'
-    else if(req.headers['user-agent'].match(/Linux/)) platform = 'Linux'
-    else if(req.headers['user-agent'].match(/Win/)) platform = 'Windows'
-    else if(req.headers['user-agent'].match(/CrOS/)) platform = 'ChromeOS'
-
-    const device = platform==='Unknown'&&browser==='Unknown'? platform:browser+' Browser in '+platform
-
-    const getBody = util.promisify(bodyParser.urlencoded())
-    await getBody(req,res)
-    const signupData = req.body
-    if(!signupData.username||!signupData.email||!signupData.password) return{props:{}}
-    const hash = sum(signupData.username+signupData.password)
-    try{
-        const newUser = await prisma.user.create({
-            data:{
-                username:signupData.username,
-                email:signupData.email,
-                hash:hash
-            }
-        })
-        if(newUser){
-            const newCookie = await prisma.cookies.create({
-                data:{
-                    cookie:crypto.randomBytes(20).toString('hex'),
-                    userId: newUser.id,
-                    device:device
-                }
-            })
-            res.setHeader('set-Cookie',`token=${newCookie.cookie}; path=/; max-age=${7*24*60*60}`)
-            return {
-                redirect:{
-                    destination:'/',
-                    permanant:false,
-                }
-            }
-        }
-    }
-    catch(err){
-        return {
-            props:{
-                err:'used username or email already been used'
-            }
-        }
-    }
 }

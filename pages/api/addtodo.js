@@ -1,5 +1,5 @@
 import prisma from '../../lib/dbclient'
-import tokenFromCookie from '../../lib/tokenFromCookie'
+import {tokenFromCookie} from '../../lib/manageCookies'
 import { formatDistanceToNow } from 'date-fns'
 export default async function handler(req,res){
     const todo = req.body

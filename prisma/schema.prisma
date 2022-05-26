@@ -24,6 +24,7 @@ model User {
     username String    @unique
     email    String    @unique
     hash     String    @unique
+    salt     String?
     todos    Todo[]
     Cookies  Cookies[]
     premium  Boolean   @default(false)

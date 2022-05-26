@@ -3,7 +3,10 @@ import prisma from "../../lib/dbclient"
 export default async function handler(req,res){
     const value = req.body.value
     const name = req.body.name
-    if(!value) res.status(204)
+    if(!value) {
+        return res.status(204)
+        
+    }
     let matchedUser
     if(name==='username'){
         matchedUser = await prisma.user.findUnique({
@@ -19,6 +22,6 @@ export default async function handler(req,res){
             }
         })
     }
-    if(!matchedUser) return res.status(200).send('Available')
-    else return res.status(200).send('Unavailable')
+    if(!matchedUser) return res.status(200).json({availablity:true})
+    else return res.status(200).send({availablity:false})
 }
